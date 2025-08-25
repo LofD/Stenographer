@@ -30,38 +30,28 @@
         {
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
-            button1 = new Button();
-            button2 = new Button();
+            loadModelButton = new Button();
             textBox1 = new TextBox();
             notifyIcon1 = new NotifyIcon(components);
             progressBar1 = new ProgressBar();
             button3 = new Button();
             label1 = new Label();
             settingsBox = new GroupBox();
-            modelsSelect = new ComboBox();
             saveSettingsButton = new Button();
+            modelsSelect = new ComboBox();
+            toggleRecordButton = new Button();
             settingsBox.SuspendLayout();
             SuspendLayout();
             // 
-            // button1
+            // loadModelButton
             // 
-            button1.Location = new Point(12, 12);
-            button1.Name = "button1";
-            button1.Size = new Size(75, 23);
-            button1.TabIndex = 0;
-            button1.Text = "button1";
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
-            // 
-            // button2
-            // 
-            button2.Location = new Point(307, 11);
-            button2.Name = "button2";
-            button2.Size = new Size(75, 23);
-            button2.TabIndex = 1;
-            button2.Text = "button2";
-            button2.UseVisualStyleBackColor = true;
-            button2.Click += button2_Click;
+            loadModelButton.Location = new Point(12, 12);
+            loadModelButton.Name = "loadModelButton";
+            loadModelButton.Size = new Size(121, 23);
+            loadModelButton.TabIndex = 0;
+            loadModelButton.Text = "Load Model";
+            loadModelButton.UseVisualStyleBackColor = true;
+            loadModelButton.Click += loadModelButton_Click;
             // 
             // textBox1
             // 
@@ -115,15 +105,6 @@
             settingsBox.TabStop = false;
             settingsBox.Text = "Settings";
             // 
-            // modelsSelect
-            // 
-            modelsSelect.DropDownStyle = ComboBoxStyle.DropDownList;
-            modelsSelect.FormattingEnabled = true;
-            modelsSelect.Location = new Point(6, 22);
-            modelsSelect.Name = "modelsSelect";
-            modelsSelect.Size = new Size(294, 23);
-            modelsSelect.TabIndex = 7;
-            // 
             // saveSettingsButton
             // 
             saveSettingsButton.Location = new Point(225, 258);
@@ -134,18 +115,38 @@
             saveSettingsButton.UseVisualStyleBackColor = true;
             saveSettingsButton.Click += saveSettingsButton_Click;
             // 
+            // modelsSelect
+            // 
+            modelsSelect.DropDownStyle = ComboBoxStyle.DropDownList;
+            modelsSelect.FormattingEnabled = true;
+            modelsSelect.Location = new Point(6, 22);
+            modelsSelect.Name = "modelsSelect";
+            modelsSelect.Size = new Size(294, 23);
+            modelsSelect.TabIndex = 7;
+            // 
+            // toggleRecordButton
+            // 
+            toggleRecordButton.Enabled = false;
+            toggleRecordButton.Location = new Point(307, 70);
+            toggleRecordButton.Name = "toggleRecordButton";
+            toggleRecordButton.Size = new Size(75, 23);
+            toggleRecordButton.TabIndex = 8;
+            toggleRecordButton.Text = "Start";
+            toggleRecordButton.UseVisualStyleBackColor = true;
+            toggleRecordButton.Click += toggleRecordButton_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(toggleRecordButton);
             Controls.Add(settingsBox);
             Controls.Add(label1);
             Controls.Add(button3);
             Controls.Add(progressBar1);
             Controls.Add(textBox1);
-            Controls.Add(button2);
-            Controls.Add(button1);
+            Controls.Add(loadModelButton);
             Name = "Form1";
             Text = "Form1";
             FormClosed += Form1_FormClosed;
@@ -158,8 +159,7 @@
 
         #endregion
 
-        private Button button1;
-        private Button button2;
+        private Button loadModelButton;
         private TextBox textBox1;
         private NotifyIcon notifyIcon1;
         private ProgressBar progressBar1;
@@ -168,5 +168,6 @@
         private GroupBox settingsBox;
         private ComboBox modelsSelect;
         private Button saveSettingsButton;
+        private Button toggleRecordButton;
     }
 }

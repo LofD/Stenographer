@@ -24,9 +24,26 @@ namespace WinFormsApp1
         private const int WM_HOTKEY = 0x0312;
 
         private Model _model;
+
         private VoskRecognizer _recognizer;
         private WaveInEvent _waveIn;
         private WaveFileWriter _writer;
+
+        private Boolean isModelLoaded = false;
+        private Boolean isRecording = false;
+
+        private void setIsRecording(Boolean value)
+        {
+            isRecording = value;
+            loadModelButton.Enabled = !value;
+            toggleRecordButton.Enabled = value;
+        }
+
+        private void setIsModelLoaded(Boolean value)
+        {
+            isModelLoaded = value;
+            toggleRecordButton.Enabled = value;
+        }
 
         private void OnDataAvailable(object sender, WaveInEventArgs e)
         {
@@ -59,49 +76,18 @@ namespace WinFormsApp1
             InitializeComponent();
         }
 
-        [HandleProcessCorruptedStateExceptions]
         protected async void initVoskModel()
         {
+            loadModelButton.Enabled = false;
+            setIsModelLoaded(false);
             string modelName = Properties.Settings.Default.ModelName;
-            try
-            {
-                Vosk.Vosk.SetLogLevel(0);
-
-                //_model = new Model("big-model"); // путь к папке с моделью
-
-
-                progressBar1.Style = ProgressBarStyle.Marquee;
-                await Task.Run(() => _model = new Model(modelName));
-
-                
-
-                progressBar1.Style = ProgressBarStyle.Blocks;
-
-                _recognizer = new VoskRecognizer(_model, 16000.0f);
-
-                _waveIn = new WaveInEvent
-                {
-                    DeviceNumber = 0,
-                    WaveFormat = new WaveFormat(16000, 1),
-                    BufferMilliseconds = 50
-                };
-
-                _waveIn.DataAvailable += OnDataAvailable;
-                _writer = new WaveFileWriter("test.wav", _waveIn.WaveFormat);
-                _waveIn.StartRecording();
-
-                AppendText("Началось распознавание...\r\n");
-                button1.Enabled = false;
-                button2.Enabled = true;
-            }
-            catch  (AccessViolationException ex)
-            {
-                MessageBox.Show("Ошибка доступа к модели: " + ex.Message);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Ошибка: " + ex.Message);
-            }
+            _model?.Dispose();
+            Vosk.Vosk.SetLogLevel(0);
+            progressBar1.Style = ProgressBarStyle.Marquee;
+            await Task.Run(() => _model = new Model(modelName));
+            progressBar1.Style = ProgressBarStyle.Blocks;
+            setIsModelLoaded(true);
+            loadModelButton.Enabled = true;
         }
 
         protected override void WndProc(ref Message m)
@@ -114,24 +100,9 @@ namespace WinFormsApp1
             base.WndProc(ref m);
         }
 
-        private async void button1_Click(object sender, EventArgs e)
-        {
-            initVoskModel();
-        }
-
         private void button2_Click(object sender, EventArgs e)
         {
-            _waveIn?.StopRecording();
-            _waveIn?.Dispose();
-            _recognizer?.Dispose();
-            _model?.Dispose();
-            _writer?.Dispose();
 
-            Clipboard.SetText(textBox1.Text);
-
-            AppendText("Распознавание остановлено.\r\n");
-            button1.Enabled = true;
-            button2.Enabled = false;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -197,6 +168,58 @@ namespace WinFormsApp1
         {
             Properties.Settings.Default.ModelName = modelsSelect.SelectedItem?.ToString() ?? "--";
             Properties.Settings.Default.Save();
+        }
+
+        private void toggleRecording()
+        {
+            if (isRecording)
+            {
+                _waveIn?.StopRecording();
+                _waveIn?.Dispose();
+                _recognizer?.Dispose();
+                _writer?.Dispose();
+
+                Clipboard.SetText(textBox1.Text);
+
+                AppendText("Распознавание остановлено.\r\n");
+                toggleRecordButton.Text = "Start";
+                loadModelButton.Enabled = true;
+            }
+            else
+            {
+                loadModelButton.Enabled = false;
+                _recognizer = new VoskRecognizer(_model, 16000.0f);
+
+                _waveIn = new WaveInEvent
+                {
+                    DeviceNumber = 0,
+                    WaveFormat = new WaveFormat(16000, 1),
+                    BufferMilliseconds = 50
+                };
+
+                _waveIn.DataAvailable += OnDataAvailable;
+                _writer = new WaveFileWriter("test.wav", _waveIn.WaveFormat);
+                _waveIn.StartRecording();
+
+                AppendText("Началось распознавание...\r\n");
+                
+                toggleRecordButton.Text = "Stop";
+            }
+            isRecording = !isRecording;
+        }
+
+        private void loadModelButton_Click(object sender, EventArgs e)
+        {
+            initVoskModel();
+        }
+
+        private void toggleRecordButton_Click(object sender, EventArgs e)
+        {
+            if (!isModelLoaded)
+            {
+                return;
+            }
+            toggleRecording();
         }
     }
 }
