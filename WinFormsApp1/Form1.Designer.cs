@@ -67,6 +67,7 @@
             notifyIcon1.Text = "notifyIcon1";
             notifyIcon1.Visible = true;
             notifyIcon1.DoubleClick += notifyIcon1_DoubleClick;
+            notifyIcon1.MouseDoubleClick += notifyIcon1_MouseDoubleClick;
             // 
             // progressBar1
             // 
@@ -149,6 +150,7 @@
             Controls.Add(loadModelButton);
             Name = "Form1";
             Text = "Form1";
+            WindowState = FormWindowState.Minimized;
             FormClosed += Form1_FormClosed;
             Load += Form1_Load;
             Resize += Form1_Resize;

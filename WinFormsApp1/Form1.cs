@@ -1,10 +1,7 @@
 ﻿using NAudio.CoreAudioApi;
-using NAudio.Gui;
 using NAudio.Wave;
 using Newtonsoft.Json.Linq;
-using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
-using System.Security;
 using Vosk;
 
 namespace WinFormsApp1
@@ -20,24 +17,16 @@ namespace WinFormsApp1
 
         private const int HOTKEY_ID = 9000;
         private const uint MOD_NONE = 0x0000;
-        private const uint VK_F9 = 0x78;
+        private const uint VK_F4 = 0x73;
         private const int WM_HOTKEY = 0x0312;
 
         private Model _model;
 
         private VoskRecognizer _recognizer;
         private WaveInEvent _waveIn;
-        private WaveFileWriter _writer;
 
         private Boolean isModelLoaded = false;
         private Boolean isRecording = false;
-
-        private void setIsRecording(Boolean value)
-        {
-            isRecording = value;
-            loadModelButton.Enabled = !value;
-            toggleRecordButton.Enabled = value;
-        }
 
         private void setIsModelLoaded(Boolean value)
         {
@@ -47,15 +36,20 @@ namespace WinFormsApp1
 
         private void OnDataAvailable(object sender, WaveInEventArgs e)
         {
-            // TODO: remove this line if you don't want to save the audio to a file
-            _writer.Write(e.Buffer, 0, e.BytesRecorded);
-
-
             if (_recognizer.AcceptWaveform(e.Buffer, e.BytesRecorded))
             {
                 string json = _recognizer.Result();
-                string text = JObject.Parse(json)["text"]?.ToString();
-                AppendText("👂 " + text + "\r\n");
+                AppendText(JObject.Parse(json)["text"]?.ToString() ?? "");
+            }
+        }
+
+        private void OnRecordingStopped(object sender, StoppedEventArgs e)
+        {
+            string json = _recognizer.FinalResult();
+            AppendText(JObject.Parse(json)["text"]?.ToString() ?? "");
+            if (textBox1.Text != "")
+            {
+                Clipboard.SetText(textBox1.Text);
             }
         }
 
@@ -94,8 +88,7 @@ namespace WinFormsApp1
         {
             if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID)
             {
-                // Здесь твое действие при нажатии F9
-                MessageBox.Show("F9 нажата!");
+                toggleRecording();
             }
             base.WndProc(ref m);
         }
@@ -107,8 +100,7 @@ namespace WinFormsApp1
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            RegisterHotKey(this.Handle, HOTKEY_ID, MOD_NONE, VK_F9);
-
+            RegisterHotKey(this.Handle, HOTKEY_ID, MOD_NONE, VK_F4);
 
             string path = @".\models";
             modelsSelect.Items.Add("--");
@@ -129,6 +121,9 @@ namespace WinFormsApp1
             {
                 modelsSelect.SelectedIndex = selectedIndex;
             }
+
+            initVoskModel();
+            Hide();
         }
 
         private void Form1_Resize(object sender, EventArgs e)
@@ -137,7 +132,7 @@ namespace WinFormsApp1
             {
                 Hide();
                 notifyIcon1.Visible = true;
-                //notifyIcon1.ShowBalloonTip(1000, "Программа свернута", "Работает в фоновом режиме", ToolTipIcon.Info);
+                //notifyIcon1.ShowBalloonTip(1000, "Title", "Text", ToolTipIcon.Info);
             }
         }
 
@@ -172,37 +167,37 @@ namespace WinFormsApp1
 
         private void toggleRecording()
         {
+            if (!isModelLoaded)
+            {
+                return;
+            }
+
             if (isRecording)
             {
-                _waveIn?.StopRecording();
-                _waveIn?.Dispose();
-                _recognizer?.Dispose();
-                _writer?.Dispose();
+                _waveIn.StopRecording();
 
-                Clipboard.SetText(textBox1.Text);
 
-                AppendText("Распознавание остановлено.\r\n");
                 toggleRecordButton.Text = "Start";
                 loadModelButton.Enabled = true;
             }
             else
             {
+                textBox1.Text = "";
                 loadModelButton.Enabled = false;
+                _recognizer?.Dispose();
                 _recognizer = new VoskRecognizer(_model, 16000.0f);
-
+                _waveIn?.Dispose();
                 _waveIn = new WaveInEvent
                 {
                     DeviceNumber = 0,
                     WaveFormat = new WaveFormat(16000, 1),
-                    BufferMilliseconds = 50
+                    BufferMilliseconds = 100
                 };
 
                 _waveIn.DataAvailable += OnDataAvailable;
-                _writer = new WaveFileWriter("test.wav", _waveIn.WaveFormat);
+                _waveIn.RecordingStopped += OnRecordingStopped;
                 _waveIn.StartRecording();
 
-                AppendText("Началось распознавание...\r\n");
-                
                 toggleRecordButton.Text = "Stop";
             }
             isRecording = !isRecording;
@@ -220,6 +215,11 @@ namespace WinFormsApp1
                 return;
             }
             toggleRecording();
+        }
+
+        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+
         }
     }
 }
