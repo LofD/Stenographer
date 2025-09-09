@@ -3,6 +3,7 @@ using NAudio.Wave;
 using Newtonsoft.Json.Linq;
 using System.Runtime.InteropServices;
 using Vosk;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace WinFormsApp1
 {
@@ -28,7 +29,40 @@ namespace WinFormsApp1
         private Boolean isModelLoaded = false;
         private Boolean isRecording = false;
 
-        private void setIsModelLoaded(Boolean value)
+        private OverlayForm overlay;
+        private string resultText = "";
+
+        public Boolean GetIsRecording()
+        {
+            return isRecording;
+        }
+
+        private void AppendResultText(string text)
+        {
+            resultText += " " + text;
+            OnResultTextUpdate();
+        }
+        private void ResetText()
+        {
+            resultText = "";
+            OnResultTextUpdate();
+        }
+
+        private void OnResultTextUpdate()
+        {
+            if (textBox1.InvokeRequired)
+            {
+                textBox1.Invoke(new Action(() => textBox1.Text = resultText));
+            }
+            else
+            {
+                textBox1.Text = resultText;
+            }
+
+            overlay.updateText(resultText);
+        }
+
+        private void SetIsModelLoaded(Boolean value)
         {
             isModelLoaded = value;
             toggleRecordButton.Enabled = value;
@@ -39,29 +73,17 @@ namespace WinFormsApp1
             if (_recognizer.AcceptWaveform(e.Buffer, e.BytesRecorded))
             {
                 string json = _recognizer.Result();
-                AppendText(JObject.Parse(json)["text"]?.ToString() ?? "");
+                AppendResultText(JObject.Parse(json)["text"]?.ToString() ?? "");
             }
         }
 
         private void OnRecordingStopped(object sender, StoppedEventArgs e)
         {
             string json = _recognizer.FinalResult();
-            AppendText(JObject.Parse(json)["text"]?.ToString() ?? "");
+            AppendResultText(JObject.Parse(json)["text"]?.ToString() ?? "");
             if (textBox1.Text != "")
             {
-                Clipboard.SetText(textBox1.Text);
-            }
-        }
-
-        private void AppendText(string text)
-        {
-            if (textBox1.InvokeRequired)
-            {
-                textBox1.Invoke(new Action(() => textBox1.AppendText(text)));
-            }
-            else
-            {
-                textBox1.AppendText(text);
+                Clipboard.SetText(textBox1.Text.Trim());
             }
         }
 
@@ -73,14 +95,14 @@ namespace WinFormsApp1
         protected async void initVoskModel()
         {
             loadModelButton.Enabled = false;
-            setIsModelLoaded(false);
+            SetIsModelLoaded(false);
             string modelName = Properties.Settings.Default.ModelName;
             _model?.Dispose();
             Vosk.Vosk.SetLogLevel(0);
             progressBar1.Style = ProgressBarStyle.Marquee;
             await Task.Run(() => _model = new Model(modelName));
             progressBar1.Style = ProgressBarStyle.Blocks;
-            setIsModelLoaded(true);
+            SetIsModelLoaded(true);
             loadModelButton.Enabled = true;
         }
 
@@ -88,18 +110,15 @@ namespace WinFormsApp1
         {
             if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID)
             {
-                toggleRecording();
+                ToggleRecording();
             }
             base.WndProc(ref m);
         }
 
-        private void button2_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void Form1_Load(object sender, EventArgs e)
         {
+            overlay = new OverlayForm();
+            overlay.SetToggleAction(ToggleRecording, GetIsRecording);
             RegisterHotKey(this.Handle, HOTKEY_ID, MOD_NONE, VK_F4);
 
             string path = @".\models";
@@ -165,7 +184,7 @@ namespace WinFormsApp1
             Properties.Settings.Default.Save();
         }
 
-        private void toggleRecording()
+        private void ToggleRecording()
         {
             if (!isModelLoaded)
             {
@@ -175,14 +194,12 @@ namespace WinFormsApp1
             if (isRecording)
             {
                 _waveIn.StopRecording();
-
-
                 toggleRecordButton.Text = "Start";
                 loadModelButton.Enabled = true;
             }
             else
             {
-                textBox1.Text = "";
+                ResetText();
                 loadModelButton.Enabled = false;
                 _recognizer?.Dispose();
                 _recognizer = new VoskRecognizer(_model, 16000.0f);
@@ -197,8 +214,8 @@ namespace WinFormsApp1
                 _waveIn.DataAvailable += OnDataAvailable;
                 _waveIn.RecordingStopped += OnRecordingStopped;
                 _waveIn.StartRecording();
-
                 toggleRecordButton.Text = "Stop";
+                overlay.ShowOverlay();
             }
             isRecording = !isRecording;
         }
@@ -214,12 +231,7 @@ namespace WinFormsApp1
             {
                 return;
             }
-            toggleRecording();
-        }
-
-        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
-        {
-
+            ToggleRecording();
         }
     }
 }

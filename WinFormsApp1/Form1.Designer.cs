@@ -67,7 +67,6 @@
             notifyIcon1.Text = "notifyIcon1";
             notifyIcon1.Visible = true;
             notifyIcon1.DoubleClick += notifyIcon1_DoubleClick;
-            notifyIcon1.MouseDoubleClick += notifyIcon1_MouseDoubleClick;
             // 
             // progressBar1
             // 
