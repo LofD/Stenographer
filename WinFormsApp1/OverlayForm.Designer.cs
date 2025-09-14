@@ -28,19 +28,17 @@
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
             resultLabel = new Label();
-            timer1 = new System.Windows.Forms.Timer(components);
             SuspendLayout();
             // 
             // resultLabel
             // 
             resultLabel.Dock = DockStyle.Top;
-            resultLabel.Font = new Font("Times New Roman", 72F, FontStyle.Bold, GraphicsUnit.Point, 204);
+            resultLabel.Font = new Font("Times New Roman", 36F, FontStyle.Bold, GraphicsUnit.Point, 204);
             resultLabel.ForeColor = Color.White;
             resultLabel.Location = new Point(0, 0);
             resultLabel.Name = "resultLabel";
-            resultLabel.Size = new Size(800, 301);
+            resultLabel.Size = new Size(800, 248);
             resultLabel.TabIndex = 0;
             resultLabel.Text = "Placeholder";
             resultLabel.TextAlign = ContentAlignment.MiddleCenter;
@@ -57,7 +55,6 @@
             Name = "OverlayForm";
             Opacity = 0.8D;
             Text = "Form2";
-            TopMost = true;
             WindowState = FormWindowState.Maximized;
             Load += Form2_Load;
             Click += resultLabel_Click;
@@ -67,6 +64,5 @@
         #endregion
 
         private Label resultLabel;
-        private System.Windows.Forms.Timer timer1;
     }
 }

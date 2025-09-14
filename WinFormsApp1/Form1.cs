@@ -81,9 +81,14 @@ namespace WinFormsApp1
         {
             string json = _recognizer.FinalResult();
             AppendResultText(JObject.Parse(json)["text"]?.ToString() ?? "");
-            if (textBox1.Text != "")
+            string finalText = textBox1.Text.Trim();
+            if (finalText == "")
             {
-                Clipboard.SetText(textBox1.Text.Trim());
+                Clipboard.Clear();
+            }
+            else 
+            {
+                Clipboard.SetText(finalText);
             }
         }
 
